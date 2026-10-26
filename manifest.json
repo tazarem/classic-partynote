@@ -1,0 +1,25 @@
+{
+    "name": "파티노트 1.53 (비교용)",
+    "short_name": "파티노트 1.53",
+    "description": "짧은 이야기를 낱장 메모로 적고, 묶어서 책으로 만드는 북 라이터 어플리케이션",
+    "icons": [
+        {
+            "src": "./img/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "./img/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#FFCDD2",
+    "theme_color": "#FFCDD2",
+    "start_url": "./index.html",
+    "scope": "./"
+}
