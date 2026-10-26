@@ -1092,3 +1092,273 @@ body.has-install-banner .toast-zone { bottom: calc(var(--nav-h) + 5rem + env(saf
     scrollbar-width: none;
 }
 .mini-input::-webkit-scrollbar { display: none; }
+
+
+/* =====================================================================
+   2안 (동생 시안 '파티노트2안.fig', 2026-10-26) — 위의 옛 스타일을 덮어씀
+   수치는 시안(375px 화면)의 값 그대로: 좌우 여백 21px, 글자 px, 모서리, 간격
+   흐린 글자는 시안처럼 글자색의 40%·56% (테마가 바뀌어도 같은 비율)
+   ===================================================================== */
+:root {
+    --fab-bg: var(--text);
+    --fab-fg: var(--surface);
+    --dim40: color-mix(in srgb, var(--text) 40%, transparent);
+    --dim56: color-mix(in srgb, var(--text) 56%, transparent);
+    --gray-shape: color-mix(in srgb, var(--text) 15%, var(--surface)); /* 시안의 #D9D9D9 (흰 바탕일 때) */
+    --star: #FBBC05;
+    --side: 21px;
+}
+:root[data-theme="cryptic"] { --fab-bg: var(--accent); --fab-fg: var(--accent-text); } /* 어두운 테마는 분홍 */
+
+/* ---------- 위쪽 줄: 로고 32 · 'Party Note' 27px 굵게 · 검색·메뉴 19px ---------- */
+:root { --topbar-h: 44px; }
+.top-bar { padding: env(safe-area-inset-top) 9px 0 var(--side); }
+.logo-cover { gap: 7px; }
+.logo-img { width: 32px; height: 32px; border-radius: 0; }
+.logo-text { font-size: 27px; font-weight: bold; line-height: 35px; letter-spacing: 0; }
+.top-bar .right-position { gap: 4px; }
+.top-bar-btn { width: 40px; height: 40px; font-size: 19px; }
+
+/* ---------- 탭: 아이콘 19px + 글자 13px 굵게, 고른 것만 진하게 (나머지 40%) ---------- */
+.type-tabs { gap: 14px; margin: 0 calc(-1 * var(--side)); padding: 22px 20px 6px var(--side); align-items: center; }
+.type-tabs button, .type-tabs button[aria-selected="true"] {
+    gap: 5px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--dim40);
+    font-size: 13px;
+    font-weight: bold;
+    line-height: 17px;
+}
+.type-tabs button[aria-selected="true"] { color: var(--text); }
+.type-tabs button i, .type-tabs button[aria-selected="true"] .fa-star, .type-tabs .fa-star { font-size: 19px; color: inherit; }
+.type-tabs .count { display: none; }
+.type-tabs .trash-tab .count { display: inline; font-size: 11px; }
+@media (max-width: 440px) { .type-tabs { gap: 14px; } .type-tabs button { padding: 0; } }
+
+/* ---------- 목록: 썸네일 54×72 각진 회색, 글은 11px 띄워서 ---------- */
+.main { padding: 0 20px calc(96px + env(safe-area-inset-bottom)) var(--side); }
+.item-list { gap: 24px; padding-top: 21px; } /* 시안: 줄 간격 98px (썸네일 72 + 글이 2px 더 김) */
+.item-row, .item-row:hover {
+    align-items: flex-start;
+    gap: 11px;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+    border-radius: 0;
+    overflow: visible;
+    filter: none;
+}
+.item-row:hover .item-title { text-decoration: underline; text-underline-offset: 3px; }
+.item-thumb { position: relative; flex-shrink: 0; width: 54px; height: 72px; }
+.thumb-cover {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    color: var(--text);
+    font-size: 19px;
+    text-shadow: none;
+    box-shadow: none;
+    background-size: cover;
+    background-position: center;
+}
+.thumb-cover:not(.has-cover) { background: var(--gray-shape) !important; } /* 시안: 표지 사진이 없으면 회색 */
+.memo-thumb { height: auto; display: flex; justify-content: center; padding: 11px 0 0; }
+.memo-thumb > .fa-sticky-note { font-size: 43px; color: color-mix(in srgb, var(--text) 50%, transparent); opacity: 1; }
+.thumb-fav { position: absolute; right: 1px; bottom: 2px; font-size: 15px; color: var(--star); filter: none; }
+.memo-thumb .thumb-fav { right: 1px; bottom: auto; top: 54px; }
+.item-body { padding: 0; }
+.item-title { font-size: 13px; font-weight: bold; line-height: 18px; }
+.item-meta { margin-top: 1px; font-size: 13px; line-height: 17px; color: var(--text); }
+.item-row.memo .item-meta { color: var(--dim56); }
+.item-meta i { font-size: .85em; opacity: .75; }
+.item-status { font-weight: bold; }
+.item-desc {
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 17px;
+    color: var(--text);
+    opacity: 1;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+.item-row.book[data-status="done"], .item-row.book[data-status="stopped"] { background: none; box-shadow: none; }
+.item-row.book[data-status="stopped"] .thumb-cover { filter: grayscale(1); opacity: .6; }
+.item-row.book[data-status="stopped"] .item-title { text-decoration: line-through; text-decoration-color: var(--dim40); }
+.item-row.trashed { align-items: center; }
+.item-row.trashed .item-icon { width: 54px; min-height: 0; background: none; font-size: 24px; color: var(--dim40); }
+
+/* ---------- + 버튼 52px 원 (목록: 오른쪽 33px) · 누르면 그 자리에 책/메모 칸 (68×95, 모서리 10) ---------- */
+.fab-wrap { position: fixed; right: max(33px, calc((100vw - 720px) / 2 + 33px)); bottom: calc(22px + env(safe-area-inset-bottom)); z-index: 30; }
+.fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--fab-bg);
+    color: var(--fab-fg);
+    font-size: 26px;
+    box-shadow: none;
+    cursor: pointer;
+}
+.fab-wrap.open .fab { visibility: hidden; } /* 시안: 열리면 + 자리에 책/메모 칸 */
+.fab-menu {
+    position: absolute;
+    right: -13px;
+    bottom: 0;
+    width: 68px;
+    height: 95px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 14px 0 0 11px;
+    border-radius: 10px;
+    background: var(--fab-bg);
+    box-shadow: none;
+}
+.fab-menu[hidden] { display: none; }
+.fab-menu button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 24px;
+    margin-bottom: 19px; /* 시안: 두 줄 사이 43px */
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--fab-fg);
+    font-size: 13px;
+    font-weight: bold;
+    line-height: 17px;
+    cursor: pointer;
+}
+.fab-menu button i { width: 18px; font-size: 18px; text-align: center; }
+.fab-menu button:hover { opacity: .75; background: none; }
+
+/* ---------- 팝업 공통: 위쪽 줄 아래 선 없음 ---------- */
+.popup-header { border-bottom: 0; }
+
+/* ---------- 책 화면: 위쪽 줄 없이 ✕만 떠 있고, 표지 72×96은 위에서 22px ---------- */
+.popup[data-variant="book"] { position: relative; }
+.popup[data-variant="book"] .popup-header { position: absolute; top: env(safe-area-inset-top); right: 0; left: auto; z-index: 3; min-height: 0; padding: 8px 8px 0 0; background: none; }
+.popup[data-variant="book"] .popup-header .title { display: none; }
+.popup[data-variant="book"] .popup-content { padding: 22px 20px 0 var(--side); }
+.book-detail { min-height: 100%; display: flex; flex-direction: column; }
+.status-banner { margin-right: 32px; }
+.book-head { align-items: flex-start; gap: 15px; }
+.book-thumb { position: relative; flex-shrink: 0; width: 72px; height: 96px; }
+.book-thumb .thumb-cover { font-size: 26px; border-radius: 0; }
+.book-thumb .fav-btn { position: absolute; right: 0; bottom: 2px; width: 21px; height: 19px; padding: 0; border-radius: 0; font-size: 19px; line-height: 19px; background: none; }
+.book-thumb .fav-btn .fa-star { filter: none; }
+.book-thumb .fav-btn .fas.fa-star { color: var(--star); }
+.book-thumb .fav-btn .far.fa-star { color: var(--text); opacity: .45; }
+.book-info { justify-content: flex-start; padding: 0; min-width: 0; }
+.book-title { margin: 0; padding-right: 32px; font-size: 20px; font-weight: bold; line-height: 26px; }
+.book-meta { margin-top: 5px; font-size: 13px; line-height: 22px; color: var(--text); }
+.book-tools { display: flex; align-items: center; gap: 17px; margin: 19px 0 0 1px; }
+.book-tools .icon-btn { width: auto; height: 24px; padding: 0; border-radius: 0; font-size: 21px; background: none; }
+.book-tools .icon-btn[data-action="book-more"] { font-size: 24px; }
+.book-desc { margin: 45px 0 0; font-size: 13px; line-height: 20px; -webkit-line-clamp: 3; }
+.read-btn {
+    display: block;
+    width: 100%;
+    height: 47px;
+    margin: 53px 0 0;
+    padding: 0;
+    border: 0;
+    border-radius: 11px;
+    background: var(--accent);
+    color: var(--accent-text);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 47px;
+}
+.read-btn small { font-size: 12px; font-weight: normal; opacity: .7; }
+.page-list { margin: 30px 0 0; border-top: 0; }
+.page { border-bottom: 0; align-items: flex-start; }
+.page + .page, .chapter-row + .page, .page + .chapter-row { margin-top: 14px; }
+.page-item { align-items: flex-start; gap: 15px; padding: 0 0 0 4px; }
+.page-no {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    margin-top: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--gray-shape);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: normal;
+    line-height: 20px;
+}
+.page.marked .page-no { background: var(--accent); color: var(--accent-text); }
+.page-text { flex: 1; min-width: 0; display: flex; flex-direction: column; text-align: left; }
+.page-title { font-size: 13px; line-height: 20px; }
+.page-meta { margin-top: -2px; font-size: 11px; line-height: 20px; color: var(--dim40); font-family: inherit; }
+.page .item-fav { font-size: 11px; color: var(--star); }
+.page-mark { align-self: center; margin: 0 18px 0 auto; font-size: 14px; color: var(--accent); } /* 시안: ⋯ 왼쪽 19px */
+.page .icon-btn { width: 19px; height: 24px; margin: 2px 10px 0 0; padding: 0; opacity: 1; font-size: 19px; color: var(--text); background: none; } /* 시안: 오른쪽 끝에서 10px */
+/* 챕터: 각진 회색 띠 46px, 글자는 쪽 제목과 같은 줄(왼쪽 51px) */
+.chapter-row { margin: 0; padding: 0 10px 0 51px; height: 46px; border-radius: 0; background: var(--gray-shape); }
+.chapter-row::after { display: none; }
+.chapter-row .chapter-title { flex: 1; font-size: 13px; font-weight: normal; line-height: 20px; }
+.chapter-row .icon-btn { width: 19px; height: 24px; padding: 0; opacity: 1; font-size: 19px; background: none; color: var(--text); }
+.book-empty { font-size: 13px; }
+/* 책 화면의 +: 오른쪽 29px, 글이 짧아도 화면 아래 */
+.book-fab { position: sticky; bottom: calc(22px + env(safe-area-inset-bottom)); margin: auto -9px 22px auto; align-self: flex-end; flex-shrink: 0; z-index: 3; }
+
+/* ---------- 읽기 화면: 책 제목 20px 굵게 · 'N/M화' 13px, 본문 13px/20px ---------- */
+.popup[data-variant="reader"] .popup-header { padding: 8px 8px 0 var(--side); min-height: 0; background: var(--surface); }
+.reader-book {
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+    max-width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 26px;
+    text-align: left;
+    cursor: pointer;
+}
+/* 책 속의 화: 시안처럼 ✕ 없이 오른쪽 끝에 'N/M화' (책 제목을 누르면 책으로 돌아감, 휴대폰은 뒤로 가기) */
+.popup[data-variant="reader"]:has(.reader-book) .popup-header .close { display: none; }
+.popup[data-variant="reader"]:has(.reader-book) .popup-header { padding-right: 19px; }
+.reader-no { padding: 0; font-size: 13px; line-height: 18px; color: var(--text); font-family: inherit; }
+.popup[data-variant="reader"] .popup-content { padding: calc(var(--header-h, 34px) + 17px) 20px 0 var(--side); }
+.popup[data-variant="reader"]:not(:has(.reader-book)) .popup-content { padding-top: calc(var(--header-h, 34px) + 2px); }
+.chapter-head { margin: 0 0 12px; font-size: 14px; font-weight: 500; line-height: 20px; }
+.memo-top { display: flex; align-items: flex-start; gap: 15px; min-height: 20px; } /* 첫 줄이 길면 여러 줄로 (아래 줄과 겹치지 않게) */
+.memo-first { flex: 1; min-width: 0; font-size: 13px; font-weight: normal; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* 첫 줄이 길면 한 줄에서 … */
+.memo-top .fav-btn, .memo-top .icon-btn { flex-shrink: 0; width: auto; height: 20px; padding: 0; background: none; border-radius: 0; line-height: 20px; }
+.memo-top .fav-btn { font-size: 19px; }
+.memo-top .fav-btn .fas.fa-star { color: var(--star); }
+.memo-top .icon-btn[data-action="memo-more"] { font-size: 24px; }
+.memo-meta { margin: 0 0 15px; font-size: 11px; line-height: 20px; color: var(--dim40); font-family: inherit; }
+.memo-meta .memo-copy { height: 20px; padding: 0; font-size: 11px; line-height: 20px; color: var(--dim40); }
+.memo-content { font-size: 13px; line-height: 20px; }
+/* 아래: 4px 진행 막대(20% 테두리) + ‹ N/M화 › (화살표 16×26) */
+.memo-view .page-nav { position: sticky; bottom: 0; margin: auto calc(-1 * var(--side)) 0 calc(-1 * var(--side)); padding: 22px 27px calc(5px + env(safe-area-inset-bottom)) 32px; border-top: 0; background: var(--surface); align-items: center; }
+.memo-view .page-nav .read-progress { top: 0; height: 4px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 20%, transparent); }
+.memo-view .page-nav .icon-btn { width: 16px; height: 26px; padding: 0; font-size: 22px; background: none; }
+.memo-view .page-nav .icon-btn:disabled { opacity: .25; }
+.page-nav-no { font-size: 13px; line-height: 18px; color: var(--text); font-family: inherit; }
+.read-progress { height: 4px; }

@@ -52,7 +52,21 @@ class PartyNoteInit {
             search('')
             $('#item-searcher').focus()
         })
-        $('.item-writer').addEventListener('click', () => party_note.openNew())
+        // 오른쪽 아래 + 버튼: 책/메모 고르기 (다시 누르거나 바깥을 누르면 닫힘)
+        const fabMenu = (open) => {
+            $('.fab-menu').hidden = !open
+            $('.fab').setAttribute('aria-expanded', String(open))
+            $('.fab-wrap').classList.toggle('open', open)
+        }
+        $('.item-writer').addEventListener('click', (e) => { e.stopPropagation(); fabMenu($('.fab-menu').hidden) })
+        $('.fab-menu').addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-action]')
+            if (!btn) return
+            fabMenu(false)
+            if (btn.dataset.action === 'new-book') party_note.newBook()
+            if (btn.dataset.action === 'new-memo') party_note.editMemo(null)
+        })
+        document.addEventListener('click', (e) => { if (!e.target.closest('.fab-wrap')) fabMenu(false) })
         $('.menu-btn').addEventListener('click', () => {
             ui.toggleDrawer()
             if (ui.drawer) notices.markSeen()

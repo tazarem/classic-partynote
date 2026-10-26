@@ -11,7 +11,7 @@ const MOVE = {
 const mover = {
     // 새 주소에서만 (옛 주소에서 열면 자기 자신이라 의미 없음)
     available() {
-        return false // 비교용 옛 버전: 이사 안내를 보이지 않음
+        return false // 비교용: 이사 안내를 보이지 않음
     },
 
     start() {

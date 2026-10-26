@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="./lib/css/fontawesome5/all.min.css">
     <link rel="stylesheet" href="./css/note.css">
 
-    <title>파티노트 1.53 (비교용)</title>
+    <title>파티노트 2안 (비교용)</title>
     <meta name="robots" content="noindex, nofollow">
 
     <script src="./config.js"></script>
@@ -36,11 +36,10 @@
     <header class="top-bar">
         <div class="logo-cover">
             <img class="logo-img" src="./img/icons/favicon-32.png" alt="">
-            <div class="logo-text">PartyNote</div>
+            <div class="logo-text">Party Note</div>
         </div>
         <div class="right-position">
             <button type="button" class="top-bar-btn search-btn" aria-label="검색"><i class="fas fa-search"></i></button>
-            <button type="button" class="top-bar-btn item-writer" aria-label="새로 만들기"><i class="fas fa-plus"></i></button>
             <button type="button" class="top-bar-btn menu-btn" aria-label="메뉴"><i class="fas fa-bars"></i><span class="menu-dot" hidden aria-label="새 공지"></span></button>
         </div>
     </header>
@@ -57,6 +56,15 @@
         <nav class="type-tabs" role="tablist" aria-label="종류"></nav>
         <div class="item-list"></div>
     </main>
+
+    <!-- 새로 만들기: 오른쪽 아래 둥근 + 버튼 → 위로 책/메모 고르기 -->
+    <div class="fab-wrap">
+        <div class="fab-menu" hidden>
+            <button type="button" data-action="new-book"><i class="fas fa-book"></i> 책</button>
+            <button type="button" data-action="new-memo"><i class="far fa-sticky-note"></i> 메모</button>
+        </div>
+        <button type="button" class="fab item-writer" aria-label="새로 만들기" aria-expanded="false"><i class="fas fa-plus"></i></button>
+    </div>
 
     <!-- popup -->
     <div class="popup-overlay hide">

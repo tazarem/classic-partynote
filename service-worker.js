@@ -2,8 +2,8 @@
     class PartyNoteWebCache {
         constructor() {
             // 앱 파일을 바꾸면 버전을 올려야 사용자 기기의 캐시가 갱신됩니다.
-            this.STATIC_CACHE_NAME = 'partynote_old_static_v1.53'
-            this.DYNAMIC_CACHE_NAME = 'partynote_old_dynamic_v1.53'
+            this.STATIC_CACHE_NAME = 'partynote_classic_static_v1.57.1'
+            this.DYNAMIC_CACHE_NAME = 'partynote_classic_dynamic_v1.57.1'
             this.STATIC_CACHE_LIST = [
                 './',
                 './index.html',

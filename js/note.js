@@ -6,11 +6,11 @@ const THEMES = {
         cover_pack: ['#FF8FAB', '#FFB74D', '#FFD54F', '#AED581', '#4DD0E1', '#64B5F6', '#9575CD', '#F06292'],
         meta_color: '#FFCDD2',
     },
-    // 클래식 화이트: 읽는 화면(팝업) 바탕이 #FFFCF9. 목록 바탕은 한 톤 짙은 종이색이라 카드가 떠 보임
+    // 클래식 화이트: 2안 시안의 '기본 색상 white' 그대로 — 흰 바탕, 검은 글자, 회색(#D9D9D9) 도형, 분홍 강조, + 버튼은 검정
     classic: {
-        vars: { '--bg': '#F3EEE7', '--surface': '#FFFCF9', '--text': '#2E2925', '--sub': '#7D7268', '--accent': '#D8C3A5', '--accent-text': '#2E2925', '--line': '#2e29251f', '--overlay': '#2e292522' },
-        cover_pack: ['#C9A98A', '#A3B18A', '#8FA9B8', '#D4A5A5', '#B8A1C9', '#E0C27A', '#9DB4A0', '#C08B6E'],
-        meta_color: '#F3EEE7',
+        vars: { '--bg': '#FFFFFF', '--surface': '#FFFFFF', '--text': '#000000', '--sub': '#8A8A8A', '--accent': '#FF8FAB', '--accent-text': '#000000', '--line': '#00000026', '--overlay': '#00000033' },
+        cover_pack: ['#D9D9D9', '#C9C9C9', '#BDBDBD', '#D9D9D9', '#CFCFCF', '#C4C4C4', '#D9D9D9', '#BFBFBF'],
+        meta_color: '#FFFFFF',
     },
     cryptic: {
         vars: { '--bg': '#0D1117', '--surface': '#161B22', '--text': '#E6EDF3', '--sub': '#8B949E', '--accent': '#FF79A8', '--accent-text': '#0D1117', '--line': '#ffffff1f', '--overlay': '#00000066' },
@@ -162,6 +162,24 @@ function isCoverImage(v) {
 
 // 내려받기: 글자(또는 만들어 둔 Blob)를 파일로
 // 메모를 부르는 이름: 본문의 첫 줄 (메모에는 제목 칸이 없음). max를 주면 그 글자 수에서 자름
+// 목록·책 화면의 날짜: 2026.10.26
+function dotDate(time) {
+    const d = new Date(time)
+    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+}
+
+// 목록·쪽 목록의 날짜와 시각: 2026.10.26 16:02
+function dotDateTime(time) {
+    const d = new Date(time)
+    return `${dotDate(time)} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+// 본문 첫 줄을 뺀 나머지 (목록에서 첫 줄 아래 두 줄로 보여 줌)
+function memoRest(m) {
+    const lines = String(m?.content || '').split(/\r\n?|\n/).map(x => x.trim()).filter(Boolean)
+    return lines.slice(1).join(' ')
+}
+
 function memoLabel(m, max = 0) {
     const line = String(m?.content || '').split(/\r\n?|\n/).map(x => x.trim()).find(Boolean) || '빈 메모'
     return max && line.length > max ? `${line.slice(0, max)}…` : line
@@ -547,13 +565,13 @@ class PartyNote {
             { value: 'all', label: '전체', icon: 'fas fa-layer-group' },
             { value: 'book', label: '책', icon: ICONS.book },
             { value: 'memo', label: '메모', icon: ICONS.memo },
-            { value: 'favorite', label: '', aria: '즐겨찾기', icon: 'fas fa-star' },
+            { value: 'favorite', label: '즐겨찾기', icon: 'fas fa-star' },
             ...(this.showPrivate() ? [{ value: 'private', label: '', aria: '비공개', icon: 'fas fa-eye-slash' }] : []),
         ]
         const trash_rows = this.trashRows()
         $('.type-tabs').innerHTML = tabs.map(t => `
             <button type="button" role="tab" data-tab="${t.value}" aria-selected="${this.tab === t.value}"${t.aria ? ` aria-label="${t.aria}"` : ''}>
-                <i class="${t.icon}"></i> ${t.label} <span class="count">${in_tab(t.value).length}</span>
+                <i class="${t.icon}"></i>${t.label ? ` <span class="tab-label">${t.label}</span>` : ''} <span class="count">${in_tab(t.value).length}</span>
             </button>`).join('') + `
             <button type="button" role="tab" class="trash-tab" data-tab="trash" aria-selected="${this.tab === 'trash'}" aria-label="휴지통">
                 <i class="far fa-trash-alt"></i>${trash_rows.length ? ` <span class="count">${trash_rows.length}</span>` : ''}
@@ -722,7 +740,7 @@ class PartyNote {
     }
 
     favoriteMarkHtml(item) {
-        return item.favorite ? `<i class="item-fav fas fa-star" aria-label="즐겨찾기"></i>` : ''
+        return item.favorite ? `<i class="thumb-fav fas fa-star" aria-label="즐겨찾기"></i>` : ''
     }
 
     // 책 표지: 사진이 있으면 사진, 없으면 색과 책 아이콘
@@ -733,34 +751,38 @@ class PartyNote {
             : `<i class="${cls} ${ICONS.book}" style="background:${this.coverColor(b)}"></i>`
     }
 
+    // 목록의 책: 왼쪽 표지(즐겨찾기면 모서리에 별) · 제목 · N화와 최근 수정일 · 소개(없으면 챕터나 첫 쪽) 두 줄
     bookRowHtml(b) {
         const pages = this.pages(b.id)
         const status = statusOf(b)
         const closed = BOOK_STATUS[status].short
+        const desc = b.description ? b.description.replace(/\s+/g, ' ')
+            : pages.length ? (this.chapters(b).length ? this.chapters(b).map(c => c.title).join(', ') : memoLabel(pages[0])) : '아직 빈 책이에요'
         return `
             <div class="item-row book" data-book-id="${b.id}" data-status="${status}" tabindex="0" role="button">
-                ${this.coverHtml(b, 'item-icon book-cover')}
+                <div class="item-thumb">${this.coverHtml(b, 'thumb-cover')}${this.favoriteMarkHtml(b)}</div>
                 <div class="item-body">
                     <div class="item-title">${esc(b.title)}${b.locked ? ` <i class="book-lock fas fa-lock" aria-label="잠근 책"></i>` : ''}</div>
-                    <div class="item-sub clip">${closed ? `<i class="${BOOK_STATUS[status].icon}"></i> ${closed} · ` : ''}${pages.length ? `${pages.length}쪽 · ` : ''}${b.description ? esc(b.description.replace(/\s+/g, ' ')) : pages.length ? esc(this.chapters(b).length ? this.chapters(b).map(c => c.title).join(', ') : memoLabel(pages[0])) : '아직 빈 책이에요'}</div>
+                    <div class="item-meta">${closed ? `<span class="item-status"><i class="${BOOK_STATUS[status].icon}"></i> ${closed}</span> ` : ''}${pages.length}화 최근 수정일 : ${dotDate(b.updated_at)}</div>
+                    <div class="item-desc">${esc(desc)}</div>
                 </div>
-                ${this.favoriteMarkHtml(b)}
-                <i class="item-arrow fas fa-chevron-right"></i>
             </div>`
     }
 
+    // 목록의 메모: 메모 그림 · 본문 첫 줄 · 최근 수정일(책 속의 쪽이면 책 이름) · 나머지 본문 두 줄
     memoRowHtml(m) {
         const book = m.book_id ? this.book(m.book_id) : null
-        // 본문의 첫 줄만 (넘치면 …). 책 속의 쪽(검색·즐겨찾기)이면 아래에 책 이름
+        // 줄바꿈 없이 한 줄로 길게 쓴 메모는 둘째 줄이 없어서, 그 한 줄을 내용 칸에 두 줄까지 보여 줌 (제목 줄에서 잘린 뒷부분도 보이게)
+        const first = memoLabel(m)
+        const rest = memoRest(m) || (first.length > 20 ? first : '')
         return `
             <div class="item-row memo" data-memo-id="${m.id}" tabindex="0" role="button">
-                <i class="item-icon ${ICONS.memo}"></i>
+                <div class="item-thumb memo-thumb"><i class="far fa-sticky-note"></i>${this.favoriteMarkHtml(m)}</div>
                 <div class="item-body">
                     <div class="item-title clip">${esc(memoLabel(m))}</div>
-                    ${book ? `<div class="item-sub clip"><i class="${ICONS.book}"></i> ${esc(book.title)}</div>` : ''}
+                    <div class="item-meta">${book ? `<i class="${ICONS.book}"></i> ${esc(book.title)} · ` : ''}최근 수정일 : ${dotDate(m.updated_at)}</div>
+                    ${rest ? `<div class="item-desc">${esc(rest)}</div>` : ''}
                 </div>
-                ${this.favoriteMarkHtml(m)}
-                <i class="item-arrow fas fa-chevron-right"></i>
             </div>`
     }
 
@@ -792,8 +814,8 @@ class PartyNote {
         if (memo) await this.saveMemoRecord(memo, { touch: false })
         else await this.saveBookRecord(item, { touch: false })
         this.render()
-        const btn = $('.popup-header .fav-btn')
-        if (btn) btn.outerHTML = this.favoriteBtnHtml(item)
+        $$('.popup .fav-btn').forEach(btn => { btn.outerHTML = this.favoriteBtnHtml(item) })
+        if (!memo) this.renderBook() // 책 표지 모서리의 별도 같이
         ui.toast(item.favorite ? '즐겨찾기에 넣었어요' : '즐겨찾기에서 뺐어요')
     }
 
@@ -844,19 +866,13 @@ class PartyNote {
         this.memo_base = null
         ui.openPopup({
             title: '', // 책 제목은 바로 아래 책 머리에 크게 있으니 위쪽 줄에는 두지 않음
-            actions: this.bookActionsHtml(b),
+            actions: '', // ★ ⓘ ⋯ 는 책 머리의 제목 아래에 (2안)
+            variant: 'book', // 2안: 위쪽 줄 없이 닫기(✕)만 떠 있음
             content: `<div class="book-detail"></div>`,
         })
         this.renderBook()
     }
 
-    // 책 화면 위쪽의 버튼들. 잠근 책은 삭제(쓰레기통) 버튼을 숨깁니다.
-    bookActionsHtml(b) {
-        return `
-            ${this.favoriteBtnHtml(b)}
-            <button type="button" class="icon-btn" data-action="book-info" aria-label="책 정보"><i class="fas fa-info-circle"></i></button>
-            <button type="button" class="icon-btn" data-action="book-more" aria-label="더 보기"><i class="fas fa-ellipsis-h"></i></button>`
-    }
 
     // 책의 … 버튼: 제목 고치기 / 삭제 (잠근 책은 삭제가 안 보임)
     async openBookMenu() {
@@ -864,10 +880,15 @@ class PartyNote {
         if (!b) return
         // 사진 고르기 창은 누른 순간 바로 열어야 해서(아이폰) 버튼 대신 파일 칸의 label을 씀
         let picked = null
+        const loose = this.memos.some(m => !m.book_id && !!m.hidden === !!b.hidden)
+        const desc = note_config.get('page_sort') === 'desc'
         const sheet = ui.openSheet({
             title: b.title,
             content: `
                 <div class="sheet-options">
+                    ${loose ? `<button type="button" class="sheet-option" data-sheet-value="page-pick"><i class="${ICONS.memo}"></i> 낱장 넣기</button>` : ''}
+                    <button type="button" class="sheet-option" data-sheet-value="chapter-add"><i class="fas fa-heading"></i> 챕터 구분 추가</button>
+                    ${this.pages(b.id).length > 1 ? `<button type="button" class="sheet-option" data-sheet-value="page-sort"><i class="fas ${desc ? 'fa-sort-numeric-down' : 'fa-sort-numeric-down-alt'}"></i> ${desc ? '1화부터 보기 (오름차순)' : '최신 화부터 보기 (내림차순)'}</button>` : ''}
                     <button type="button" class="sheet-option" data-sheet-value="rename"><i class="fas fa-pen"></i> 제목 고치기</button>
                     <button type="button" class="sheet-option" data-sheet-value="description"><i class="fas fa-quote-left"></i> 책 소개 ${b.description ? '고치기' : '쓰기'}</button>
                     <label class="sheet-option"><i class="far fa-image"></i> 표지 사진 ${b.cover ? '바꾸기' : '넣기'}<input type="file" class="cover-file" accept="image/*" hidden></label>
@@ -882,6 +903,9 @@ class PartyNote {
         const choice = await sheet
         if (choice === 'cover') return this.setBookCover(b, picked)
         if (choice === 'cover-off') return this.setBookCover(b, null)
+        if (choice === 'page-pick') return this.pickLooseMemo()
+        if (choice === 'chapter-add') return this.addChapter()
+        if (choice === 'page-sort') return this.togglePageSort()
         if (choice === 'rename') return this.renameBook()
         if (choice === 'description') return this.editBookDescription()
         if (choice === 'delete') return this.deleteBook()
@@ -910,7 +934,6 @@ class PartyNote {
         if (!b || !el) return
         const pages = this.pages(b.id)
         const mark = pages.findIndex(p => p.id === b.bookmark_id)
-        const loose = this.memos.some(m => !m.book_id && !!m.hidden === !!b.hidden)
         const status = statusOf(b)
         el.dataset.status = status
         // 보여 주는 순서만 뒤집음 (쪽 번호와 앞·뒤쪽으로 넘겨 읽는 순서는 그대로). 모든 책에 같은 설정
@@ -919,12 +942,15 @@ class PartyNote {
         const sections = this.sections(b, pages)
         const items = sections.flatMap(sec => [...(sec.chapter ? [{ chapter: sec.chapter }] : []), ...sec.pages.map(page => ({ page }))])
         if (desc) items.reverse()
+        // 쪽 줄: 번호 동그라미(마지막으로 읽은 쪽은 강조색) · 첫 줄 · 글자 수와 고친 시각 · ⋯
         const pageRow = ([p, i]) => `
                         <li class="page ${p.id === b.bookmark_id ? 'marked' : ''}">
                             <button type="button" class="page-item" data-page-open="${p.id}">
                                 <span class="page-no">${i + 1}</span>
-                                <span class="page-title">${esc(memoLabel(p))}</span>
-                                ${p.favorite ? `<i class="item-fav fas fa-star"></i>` : ''}
+                                <span class="page-text">
+                                    <span class="page-title">${esc(memoLabel(p))}${p.favorite ? ` <i class="item-fav fas fa-star" aria-label="즐겨찾기"></i>` : ''}</span>
+                                    <span class="page-meta">${p.content.replace(/\s/g, '').length.toLocaleString('ko-KR')}자 &nbsp; ${dotDateTime(p.updated_at)}</span>
+                                </span>
                                 ${p.id === b.bookmark_id ? `<i class="page-mark fas fa-bookmark" aria-label="마지막으로 읽은 쪽"></i>` : ''}
                             </button>
                             <button type="button" class="icon-btn" data-page-more="${p.id}" aria-label="더 보기"><i class="fas fa-ellipsis-h"></i></button>
@@ -934,6 +960,11 @@ class PartyNote {
                             <span class="chapter-title">${esc(c.title)}</span>
                             <button type="button" class="icon-btn" data-chapter-more="${c.uid}" aria-label="챕터 더 보기"><i class="fas fa-ellipsis-h"></i></button>
                         </li>`
+        const last = pages.length ? Math.max(b.updated_at, ...pages.map(p => p.updated_at)) : b.updated_at
+        // 큰 버튼: 읽던 곳이 있으면 이어 읽기, 없으면 1화부터, 빈 책이면 첫 화 쓰기
+        const main_btn = mark >= 0 ? `<button type="button" class="btn primary read-btn" data-page-open="${pages[mark].id}">이어 읽기 <small>(${mark + 1}화)</small></button>`
+            : pages.length ? `<button type="button" class="btn primary read-btn" data-page-open="${pages[0].id}">1화부터 읽기</button>`
+                : `<button type="button" class="btn primary read-btn" data-action="page-new">첫 화 쓰기</button>`
         el.innerHTML = `
             ${status !== 'active' ? `
                 <div class="status-banner">
@@ -941,28 +972,23 @@ class PartyNote {
                     <span>${BOOK_STATUS[status].label}이에요 · ${esc(fullDate(b.status_at))}</span>
                 </div>` : ''}
             <div class="book-head" style="--cover:${this.coverColor(b)}">
-                ${this.coverHtml(b, 'book-spine')}
+                <div class="book-thumb">${this.coverHtml(b, 'thumb-cover')}${this.favoriteBtnHtml(b)}</div>
                 <div class="book-info">
                     <h2 class="book-title">${esc(b.title)}${b.locked ? ` <i class="book-lock fas fa-lock" aria-label="잠근 책"></i>` : ''}</h2>
-                    <div class="book-meta">${pages.length ? `${pages.length}쪽` : '아직 빈 책이에요'} · ${esc(dateTimeLabel(b.created_at))}에 만듦</div>
+                    <div class="book-meta">${pages.length}화 최근 수정일 : ${dotDate(last)}</div>
+                    <div class="book-tools">
+                        <button type="button" class="icon-btn" data-action="book-info" aria-label="책 정보"><i class="fas fa-info-circle"></i></button>
+                        <button type="button" class="icon-btn" data-action="book-more" aria-label="더 보기 (낱장 넣기·챕터 구분 추가·제목·소개·표지)"><i class="fas fa-ellipsis-h"></i></button>
+                    </div>
                 </div>
             </div>
             ${b.description ? `<p class="book-desc" title="눌러서 펼치기·접기">${esc(b.description)}</p>` : ''}
-            <div class="book-btns">
-                <button type="button" class="btn primary" data-action="page-new"><i class="fas fa-plus"></i> 새 쪽 쓰기</button>
-                ${loose ? `<button type="button" class="btn ghost" data-action="page-pick"><i class="${ICONS.memo}"></i> 낱장 넣기</button>` : ''}
-                ${mark >= 0 ? `<button type="button" class="btn ghost" data-page-open="${pages[mark].id}"><i class="fas fa-bookmark"></i> 이어 읽기 (${mark + 1}쪽)</button>` : ''}
-                <button type="button" class="btn ghost" data-action="chapter-add"><i class="fas fa-heading"></i> 챕터 구분 추가</button>
-                ${pages.length > 1 ? `
-                    <button type="button" class="text-btn page-sort" data-action="page-sort" aria-label="쪽 정렬 바꾸기">
-                        <i class="fas ${desc ? 'fa-sort-numeric-down-alt' : 'fa-sort-numeric-down'}"></i> ${desc ? '내림차순' : '오름차순'}
-                    </button>` : ''}
-            </div>
+            ${main_btn}
             ${sections.length ? `
                 <ol class="page-list">
                     ${items.map(x => x.chapter ? chapterRow(x.chapter) : pageRow(x.page)).join('')}
-                </ol>` : ''}
-            ${pages.length ? '' : `<p class="book-empty">첫 쪽을 써 보세요. 낱장으로 써 둔 메모를 넣을 수도 있어요.</p>`}`
+                </ol>` : `<p class="book-empty">첫 화를 써 보세요. 낱장으로 써 둔 메모는 ⋯ 메뉴의 '낱장 넣기'로 넣을 수 있어요.</p>`}
+            <button type="button" class="fab book-fab" data-action="page-new" aria-label="새 화 쓰기"><i class="fas fa-plus"></i></button>`
     }
 
     // 책 정보: 언제 만들었고 얼마나 써 왔는지. 아래에 내보내기와 완결·연재 중지·재개.
@@ -1056,8 +1082,6 @@ class PartyNote {
         await this.saveBookRecord(b, { touch: false })
         this.render()
         this.renderBook()
-        const actions = $('.popup-header .actions')
-        if (actions && $('.book-detail')) actions.innerHTML = this.bookActionsHtml(b)
         ui.toast(locked ? '책을 잠갔어요' : '잠금을 풀었어요')
     }
 
@@ -1380,31 +1404,30 @@ class PartyNote {
         const pages = b ? this.pages(b.id) : []
         const index = pages.findIndex(p => p.id === m.id)
         const chapter = b ? this.chapterStartingAt(b, m) : null
+        // 2안: 위쪽 줄은 책 제목(누르면 책으로)과 '2/26화', 본문 맨 위에 첫 줄 · ★ · ⋯ 과 글자 수·고친 시각
+        const chars = m.content.replace(/\s/g, '').length
         ui.openPopup({
-            title: `<i class="${ICONS.memo}"></i> ${esc(memoLabel(m))}`,
-            actions: `
-                ${this.favoriteBtnHtml(m)}
-                <button type="button" class="icon-btn" data-action="memo-more" aria-label="더 보기"><i class="fas fa-ellipsis-h"></i></button>`,
+            title: b ? `<button type="button" class="reader-book" data-action="back-to-book" title="책으로 돌아가기"><span class="clip">${esc(b.title)}</span></button>` : '',
+            actions: b ? `<span class="reader-no">${index + 1}/${pages.length}화</span>` : '',
             variant: 'reader', // 아래로 읽어 내려가면 위·아래 줄을 숨김 (onReaderScroll)
             content: `
                 <div class="memo-view">
-                    ${b ? `
-                        <button type="button" class="book-crumb" data-action="back-to-book">
-                            <i class="fas fa-chevron-left"></i> <i class="${ICONS.book}"></i> <span class="clip">${esc(b.title)}</span>
-                            <span class="crumb-no">${index + 1} / ${pages.length}쪽</span>
-                        </button>` : ''}
                     ${chapter ? `<h2 class="chapter-head">${esc(chapter.title)}</h2>` : ''}
-                    <div class="memo-head">
+                    <div class="memo-top">
+                        <div class="memo-first">${esc(memoLabel(m))}</div>
+                        ${this.favoriteBtnHtml(m)}
+                        <button type="button" class="icon-btn" data-action="memo-more" aria-label="더 보기"><i class="fas fa-ellipsis-h"></i></button>
+                    </div>
+                    <div class="memo-meta">${chars.toLocaleString('ko-KR')}자 &nbsp; ${dotDateTime(m.updated_at)}
                         ${m.content.trim() ? `<button type="button" class="text-btn memo-copy" data-action="memo-copy"><i class="far fa-copy"></i> 본문 복사</button>` : ''}
                     </div>
                     ${m.content.trim() ? `<div class="memo-content">${linkify(m.content)}</div>` : `<p class="book-empty">내용이 없어요</p>`}
-                    <div class="memo-date">${esc(dateTimeLabel(m.updated_at))} 수정</div>
                     ${b ? `
                         <div class="page-nav">
                             <div class="read-progress" aria-hidden="true"><i></i></div>
-                            <button type="button" class="btn ghost" ${index > 0 ? `data-page-open="${pages[index - 1].id}"` : 'disabled'}><i class="fas fa-chevron-left"></i> 앞쪽</button>
-                            <span class="page-nav-no">${index + 1} / ${pages.length}쪽</span>
-                            <button type="button" class="btn ghost" ${index < pages.length - 1 ? `data-page-open="${pages[index + 1].id}"` : 'disabled'}>뒤쪽 <i class="fas fa-chevron-right"></i></button>
+                            <button type="button" class="icon-btn page-prev" ${index > 0 ? `data-page-open="${pages[index - 1].id}"` : 'disabled'} aria-label="앞 화"><i class="fas fa-chevron-left"></i></button>
+                            <span class="page-nav-no">${index + 1}/${pages.length}화</span>
+                            <button type="button" class="icon-btn page-next" ${index < pages.length - 1 ? `data-page-open="${pages[index + 1].id}"` : 'disabled'} aria-label="다음 화"><i class="fas fa-chevron-right"></i></button>
                         </div>` : `
                         <div class="solo-progress"><div class="read-progress" aria-hidden="true"><i></i></div></div>`}
                 </div>`,
